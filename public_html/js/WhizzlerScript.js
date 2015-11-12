@@ -24,6 +24,7 @@ var XY_STEP;
 
 // INITIAL WHIZZLE VELOCITY
 var V_INIT;
+var V_MAX;
 
 // TYPES OF WHIZZLES
 var ELLIPSE_WHIZZLE_TYPE;
@@ -118,6 +119,7 @@ function initConstants()
 
     // THE INITIAL VELOCITY FOR ALL WHIZZLES FOR BOTH AXES
     V_INIT = 5;
+    V_MAX = 100;
 
     // FPS INITIALIZION
     FPS_MIN = 1;
@@ -428,8 +430,8 @@ function addWhizzle()
     initWhizzleSlider(whizzleDiv.find(".whizzle_height_slider"), XY_MIN, XY_MAX/10, XY_STEP, XY_INIT);
     initWhizzleSlider(whizzleDiv.find(".whizzle_x_slider"),  XY_MIN, canvasWidth, XY_STEP, canvasWidth/2);
     initWhizzleSlider(whizzleDiv.find(".whizzle_y_slider"),  XY_MIN, canvasHeight, XY_STEP, canvasHeight/2);
-    initWhizzleSlider(whizzleDiv.find(".whizzle_vX_slider"), XY_MIN, canvasWidth, XY_STEP, V_INIT);    
-    initWhizzleSlider(whizzleDiv.find(".whizzle_vY_slider"), XY_MIN, canvasHeight, XY_STEP, V_INIT);
+    initWhizzleSlider(whizzleDiv.find(".whizzle_vX_slider"), XY_MIN, V_MAX, XY_STEP, V_INIT);    
+    initWhizzleSlider(whizzleDiv.find(".whizzle_vY_slider"), XY_MIN, V_MAX, XY_STEP, V_INIT);
 
     // SETUP ALL THE EVENT RESPONSES
     $(whizzleId).find(".whizzle_type").change(function(){
