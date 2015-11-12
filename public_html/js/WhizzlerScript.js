@@ -61,6 +61,8 @@ var fpsInc;
 var millisPerFrame;
 
 // WHIZZLE INITIALIZATION SETTINGS
+var initX;
+var initY;
 var xInc;
 var yInc;
 var xAcc;
@@ -119,7 +121,7 @@ function initConstants()
 
     // THE INITIAL VELOCITY FOR ALL WHIZZLES FOR BOTH AXES
     V_INIT = 5;
-    V_MAX = 100;
+    V_MAX = 50;
 
     // FPS INITIALIZION
     FPS_MIN = 1;
@@ -225,6 +227,8 @@ function initSlider(slider, initMin, initMax, initStep, initValue, updateMethod)
  */
 function initData()
 {
+    initX = canvasWidth/2;
+    initY = canvasHeight/2;
     // INIT FRAME RATE STUFF
     fps = FPS_INIT;
     fpsInc = FPS_STEP;
@@ -283,6 +287,12 @@ function updateSpeed()
 function resetWhizzles()
 {
     canvas2D.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < whizzleCounter; i++) {
+        var whiz = whizzles[i];
+        whiz.setProperty(W_X, initX);
+        whiz.setProperty(W_Y, initY);
+    }
+    render();
 }
 
 /*
@@ -316,6 +326,8 @@ function updateCanvas()
     canvasHeight = $("#canvas_height_slider").slider("value");
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
+    initX = canvasWidth/2;
+    initY = canvasHeight/2;
     resetWhizzles();
 }
 
@@ -387,8 +399,8 @@ function addWhizzle()
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Fill: <span class=\"fill_js_color_span\"></span></div>\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Width: <span class='whizzle_width_display'>" + XY_INIT + "</span></span> <div class='whizzle_width_slider'></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Height: <span class='whizzle_height_display'>" + XY_INIT + "</span></span> <div class='whizzle_height_slider'></div></div><br />\n");
-    whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start X: <span class='whizzle_startX_display'>" + canvasWidth/2 + "</span></span> <div class='whizzle_x_slider'></div></div><br />\n");
-    whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start Y: <span class='whizzle_startY_display'>" + canvasHeight/2 + "</span></span> <div class='whizzle_y_slider'></div></div><br />\n");
+    whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start X: <span class='whizzle_startX_display'>" + initX + "</span></span> <div class='whizzle_x_slider'></div></div><br />\n");
+    whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start Y: <span class='whizzle_startY_display'>" + initY + "</span></span> <div class='whizzle_y_slider'></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start Vx: <span class='whizzle_startVx_display'>" + V_INIT + "</span></span> <div class='whizzle_vX_slider'></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start Vy: <span class='whizzle_startVy_display'>" + V_INIT + "</span></span> <div class='whizzle_vY_slider'></div></div><br />\n");
     
@@ -397,7 +409,7 @@ function addWhizzle()
     var jsColorInput = document.createElement('input');
     jsColorInput.style.width = '5em';
     var jsColor = new jscolor.color(jsColorInput);
-    jsColor.fromHSV(1.0, 1.0, 1.0);
+    jsColor.fromHSV(.0, 1.0, 1.0);
     jsColorSpan.append(jsColorInput);
     
     jsColorInput = jsColorSpan.find("input");
@@ -462,12 +474,14 @@ function addWhizzle()
         slide: function(){
             updateSliderDisplay($(this), ".whizzle_startX_display");
             updateWhizzleAfterControlChange(whizzleId, $(this), W_X, true);
+            initX = $(this).slider("value");
         }
     });    
     $(whizzleId).find(".whizzle_y_slider").slider({
         slide: function(){
             updateSliderDisplay($(this), ".whizzle_startY_display");
             updateWhizzleAfterControlChange(whizzleId, $(this), W_Y, true);
+            initY = $(this).slider("value");
         }
     });    
     $(whizzleId).find(".whizzle_vX_slider").slider({
