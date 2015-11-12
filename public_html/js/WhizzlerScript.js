@@ -22,6 +22,9 @@ var XY_MAX;
 var XY_INIT;
 var XY_STEP;
 
+var INIT_X;
+var INIT_Y;
+
 // INITIAL WHIZZLE VELOCITY
 var V_INIT;
 var V_MAX;
@@ -48,6 +51,8 @@ var W_Y;
 var W_VX;
 var W_VY;
 var W_WEIGHT;
+var W_INIT_X;
+var W_INIT_Y;
 
 // NOW FOR THE VARIABLES, THINGS THAT MAY CHANGE
 // DURING THE EXECUTION OF THIS APPLICATION
@@ -66,8 +71,8 @@ var fpsInc;
 var millisPerFrame;
 
 // WHIZZLE INITIALIZATION SETTINGS
-var initX;
-var initY;
+//var initX;
+//var initY;
 var xInc;
 var yInc;
 var xAcc;
@@ -152,6 +157,8 @@ function initConstants()
     W_VY        = 8;
     W_FILL_COLOR = 9;
     W_WEIGHT = 10;
+    W_INIT_X = 11;
+    W_INIT_Y = 12;
 
     // INCREMENT FOR SLIDERS
     XY_STEP = 1;
@@ -170,6 +177,11 @@ function initCanvas()
     canvasHeight = 500;
     canvas = document.getElementById("whizzler_canvas");
     canvas2D = canvas.getContext("2d");
+    $("#whizzler_canvas").click(function(){
+        resetWhizzles();
+        mouseX=parseInt(e.clientX-offsetX);
+        mouseY=parseInt(e.clientY-offsetY);
+    });
 }
 
 /*
@@ -237,8 +249,8 @@ function initSlider(slider, initMin, initMax, initStep, initValue, updateMethod)
  */
 function initData()
 {
-    initX = canvasWidth/2;
-    initY = canvasHeight/2;
+    INIT_X = canvasWidth/2;
+    INIT_Y = canvasHeight/2;
     // INIT FRAME RATE STUFF
     fps = FPS_INIT;
     fpsInc = FPS_STEP;
@@ -299,6 +311,8 @@ function resetWhizzles()
     canvas2D.clearRect(0, 0, canvas.width, canvas.height);
     for (var i = 0; i < whizzleCounter; i++) {
         var whiz = whizzles[i];
+        initX = whiz.getProperty(W_INIT_X);
+        initY = whiz.getProperty(W_INIT_Y);
         whiz.setProperty(W_X, initX);
         whiz.setProperty(W_Y, initY);
     }
@@ -336,8 +350,8 @@ function updateCanvas()
     canvasHeight = $("#canvas_height_slider").slider("value");
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
-    initX = canvasWidth/2;
-    initY = canvasHeight/2;
+    INIT_X = canvasWidth/2;
+    INIT_Y = canvasHeight/2;
     resetWhizzles();
 }
 
@@ -410,8 +424,8 @@ function addWhizzle()
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Fill: <span class=\"fill_js_color_span\"></span></div>\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Width: <span class='whizzle_width_display'>" + XY_INIT + "</span></span> <div class='whizzle_width_slider'></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Height: <span class='whizzle_height_display'>" + XY_INIT + "</span></span> <div class='whizzle_height_slider'></div></div><br />\n");
-    whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start X: <span class='whizzle_startX_display'>" + initX + "</span></span> <div class='whizzle_x_slider'></div></div><br />\n");
-    whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start Y: <span class='whizzle_startY_display'>" + initY + "</span></span> <div class='whizzle_y_slider'></div></div><br />\n");
+    whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start X: <span class='whizzle_startX_display'>" + INIT_X + "</span></span> <div class='whizzle_x_slider'></div></div><br />\n");
+    whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start Y: <span class='whizzle_startY_display'>" + INIT_Y + "</span></span> <div class='whizzle_y_slider'></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start Vx: <span class='whizzle_startVx_display'>" + V_INIT + "</span></span> <div class='whizzle_vX_slider'></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Start Vy: <span class='whizzle_startVy_display'>" + V_INIT + "</span></span> <div class='whizzle_vY_slider'></div></div><br />\n");
     
@@ -492,14 +506,16 @@ function addWhizzle()
         slide: function(){
             updateSliderDisplay($(this), ".whizzle_startX_display");
             updateWhizzleAfterControlChange(whizzleId, $(this), W_X, true);
-            initX = $(this).slider("value");
+            updateWhizzleAfterControlChange(whizzleId, $(this), W_INIT_X, true);
+            //initX = $(this).slider("value");
         }
     });    
     $(whizzleId).find(".whizzle_y_slider").slider({
         slide: function(){
             updateSliderDisplay($(this), ".whizzle_startY_display");
             updateWhizzleAfterControlChange(whizzleId, $(this), W_Y, true);
-            initY = $(this).slider("value");
+            updateWhizzleAfterControlChange(whizzleId, $(this), W_INIT_Y, true);
+            //initY = $(this).slider("value");
         }
     });    
     $(whizzleId).find(".whizzle_vX_slider").slider({
@@ -523,6 +539,19 @@ function addWhizzle()
     
     // UPDATE THE CANVAS DISPLAY
     render();
+}
+
+function isClickInside(whizzleId, x, y) {
+    // GET THE AFFECTED WHIZZLE
+    var indexStr = whizzleId.substr(1);
+    var index = Number(indexStr).valueOf();
+    var whiz = whizzles[index];
+    radius = whiz.getProperty(W_WIDTH)/2;
+    centerX = whiz.getProperty(W_X) + radius;
+    centerY = whiz.getProperty(W_Y) + (whiz.getProperty(W_HEIGHT)/2);
+    var dx = centerX-x;
+    var dy = centerY-y;
+    return( dx*dx+dy*dy <= radius*radius );
 }
 
 function updateSliderDisplay(whizSlider, displaySpanClass)
@@ -675,7 +704,9 @@ function makeWhizzle(whizzleDiv, initIdNum)
     newWhizzle.setProperty(W_WIDTH, wWidth);
     newWhizzle.setProperty(W_HEIGHT, wHeight);
     newWhizzle.setProperty(W_X, wX);
+    newWhizzle.setProperty(W_INIT_X, wX);    
     newWhizzle.setProperty(W_Y, wY);
+    newWhizzle.setProperty(W_INIT_Y, wY);
     newWhizzle.setProperty(W_VX, wVx);
     newWhizzle.setProperty(W_VY, wVy);
     
