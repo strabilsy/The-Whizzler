@@ -26,6 +26,10 @@ var XY_STEP;
 var V_INIT;
 var V_MAX;
 
+// INITIAL WEIGHT
+var INIT_WEIGHT;
+var WEIGHT_MAX;
+
 // TYPES OF WHIZZLES
 var ELLIPSE_WHIZZLE_TYPE;
 var RECTANGLE_WHIZZLE_TYPE;
@@ -43,6 +47,7 @@ var W_X;
 var W_Y;
 var W_VX;
 var W_VY;
+var W_WEIGHT;
 
 // NOW FOR THE VARIABLES, THINGS THAT MAY CHANGE
 // DURING THE EXECUTION OF THIS APPLICATION
@@ -108,6 +113,10 @@ function initConstants()
     OUTLINE_WHIZZLE_MODE = "Outline";
     FILLED_WHIZZLE_MODE = "Filled";    
     
+    //INIT WEIGHT
+    INIT_WEIGHT = 1;
+    WEIGHT_MAX = 15;
+    
     // CANVAS DIMENSION BOUNDARIES
     MIN_CANVAS_DIM = 100;
     MAX_CANVAS_DIM = 1400;
@@ -142,6 +151,7 @@ function initConstants()
     W_VX        = 7;
     W_VY        = 8;
     W_FILL_COLOR = 9;
+    W_WEIGHT = 10;
 
     // INCREMENT FOR SLIDERS
     XY_STEP = 1;
@@ -396,6 +406,7 @@ function addWhizzle()
     whizzleControlsDiv.append("<div class='whizzle_toolbar'><span class='whizzle_toolbar_title'>Type:</span><div class='whizzle_toolbar_control'><select class='whizzle_type' name='whizzle_type'><option value='" + ELLIPSE_WHIZZLE_TYPE + "'>" + ELLIPSE_WHIZZLE_TYPE + "</option><option value='" + RECTANGLE_WHIZZLE_TYPE + "'>" + RECTANGLE_WHIZZLE_TYPE + "</option></select></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Mode:</span> <div class='whizzle_toolbar_control'><select class='whizzle_mode' name='whizzle_mode'><option value='" + OUTLINE_WHIZZLE_MODE + "'>" + OUTLINE_WHIZZLE_MODE + "</option><option value='" + FILLED_WHIZZLE_MODE + "'>" + FILLED_WHIZZLE_MODE + "</option></select></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Outline: <span class=\"outline_js_color_span\"></span></div>\n");
+    whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Weight: <span class='whizzle_weight_display'>" + INIT_WEIGHT + "</span></span> <div class='whizzle_weight_slider'></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Fill: <span class=\"fill_js_color_span\"></span></div>\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Width: <span class='whizzle_width_display'>" + XY_INIT + "</span></span> <div class='whizzle_width_slider'></div></div><br />\n");
     whizzleControlsDiv.append("<div class=\"whizzle_toolbar\"><span class=\"whizzle_toolbar_title\">Height: <span class='whizzle_height_display'>" + XY_INIT + "</span></span> <div class='whizzle_height_slider'></div></div><br />\n");
@@ -438,6 +449,7 @@ function addWhizzle()
     }); 
 
     // NOW INIT THE SLIDERS THAT WE JUST ADDED
+    initWhizzleSlider(whizzleDiv.find(".whizzle_weight_slider"), XY_MIN, WEIGHT_MAX, XY_STEP, INIT_WEIGHT);
     initWhizzleSlider(whizzleDiv.find(".whizzle_width_slider"), XY_MIN, XY_MAX/10, XY_STEP, XY_INIT);
     initWhizzleSlider(whizzleDiv.find(".whizzle_height_slider"), XY_MIN, XY_MAX/10, XY_STEP, XY_INIT);
     initWhizzleSlider(whizzleDiv.find(".whizzle_x_slider"),  XY_MIN, canvasWidth, XY_STEP, canvasWidth/2);
@@ -458,6 +470,12 @@ function addWhizzle()
     $(whizzleId).find(".fill_js_color_span").change(function(){
         updateWhizzleColor(whizzleId, W_FILL_COLOR, "fill");
     });*/
+    $(whizzleId).find(".whizzle_weight_slider").slider({
+        slide: function(){
+            updateSliderDisplay($(this), ".whizzle_weight_display");
+            updateWhizzleAfterControlChange(whizzleId, $(this), W_WEIGHT, true);
+        }
+    });
     $(whizzleId).find(".whizzle_width_slider").slider({
         slide: function(){
             updateSliderDisplay($(this), ".whizzle_width_display");
@@ -632,6 +650,7 @@ function makeWhizzle(whizzleDiv, initIdNum)
     var wOutlineControl = wControls.find(".outline_js_color_span");
     var jsColorInput = wOutlineControl.find("input");
     var wOutline = "#" + jsColorInput.val();
+    var wWeight = wControls.find(".whizzle_weight_slider").slider("value");
     var wFillControl = wControls.find(".fill_js_color_span");
     var jsColorInput2 = wFillControl.find("input");
     var wFill = "#" + jsColorInput2.val();
@@ -651,6 +670,7 @@ function makeWhizzle(whizzleDiv, initIdNum)
     newWhizzle.setProperty(W_TYPE, wType);
     newWhizzle.setProperty(W_MODE, wMode);
     newWhizzle.setProperty(W_OUTLINE_COLOR, wOutline);
+    newWhizzle.setProperty(W_WEIGHT, wWeight);
     newWhizzle.setProperty(W_FILL_COLOR, wFill);
     newWhizzle.setProperty(W_WIDTH, wWidth);
     newWhizzle.setProperty(W_HEIGHT, wHeight);
@@ -718,6 +738,8 @@ function render()
         // THESE SHOULD BE CUSTOM COLORS
         var outline = whiz.getProperty(W_OUTLINE_COLOR);//"#009900";
         canvas2D.strokeStyle = outline;
+        var weight = whiz.getProperty(W_WEIGHT);
+        canvas2D.lineWidth = weight;
         //canvas2D.fillStyle = "#009900";
         var fill = whiz.getProperty(W_FILL_COLOR);
         canvas2D.fillStyle = fill;
