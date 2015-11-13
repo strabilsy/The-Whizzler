@@ -54,6 +54,59 @@ var W_WEIGHT;
 var W_INIT_X;
 var W_INIT_Y;
 var W_DRAGGING;
+var W_FREQ;
+
+
+//NOTES (FREQUENCIES)
+var A_0;
+var B_0;
+var C_1;
+var D_1;
+var E_1;
+var F_1;
+var Gs_1;
+var A_1;
+var B_1;
+var C_2;
+var D_2;
+var E_2;
+var F_2;
+var Gs_2;
+var A_2;
+var B_2;
+var C_3;
+var D_3;
+var E_3;
+var F_3;
+var Gs_3;
+var A_3;
+var B_3;
+var C_4;
+var D_4;
+var E_4;
+var F_4;
+var Gs_4;
+var A_4;
+var B_4;
+var C_5;
+var D_5;
+var E_5;
+var F_5;
+var Gs_5;
+var A_5;
+var B_5;
+var C_6;
+var D_6;
+var E_6;
+var F_6;
+var Gs_6;
+var A_6;
+var B_6;
+var C_7;
+var D_7;
+var E_7;
+var F_7;
+
 
 // NOW FOR THE VARIABLES, THINGS THAT MAY CHANGE
 // DURING THE EXECUTION OF THIS APPLICATION
@@ -73,8 +126,8 @@ var fpsInc;
 var millisPerFrame;
 
 // WHIZZLE INITIALIZATION SETTINGS
-//var initX;
-//var initY;
+var initX;
+var initY;
 var xInc;
 var yInc;
 var xAcc;
@@ -87,6 +140,10 @@ var radius;
 var whizzles;
 var whizzleCounter;
 
+var audioContext = new AudioContext();
+var gainNode = audioContext.createGain();
+var osc0, osc1, osc2, osc3, osc4, osc5, osc5, osc6, osc7, osc8, osc9;
+var nodes;
 /*
  * This function prepares the initial controls and canvas
  * so that the app can run.
@@ -104,6 +161,8 @@ function initTheWhizzler()
     
     // INITIALIZE THE DATA STRUCTURE FOR STORING THE WHIZZLES
     initData();    
+    
+    initOsc();
 }
 
 /**
@@ -162,12 +221,63 @@ function initConstants()
     W_INIT_X = 11;
     W_INIT_Y = 12;
     W_DRAGGING = 13;
+    W_FREQ = 14;
 
     // INCREMENT FOR SLIDERS
     XY_STEP = 1;
     
     // INITIAL SIZE OF WHIZZLES
     XY_INIT = 50;
+    
+    //NOTES
+    A_0 = 27.5;
+    B_0 = 30.87;
+    C_1 = 32.7;
+    D_1 = 36.71;
+    E_1 = 41.2;
+    F_1 = 43.65;
+    Gs_1 = 51.91;
+    A_1 = 55;
+    B_1 = 61.74;
+    C_2 = 65.41;
+    D_2 = 73.42;
+    E_2 = 82.41;
+    F_2 = 87.31;
+    Gs_2 = 103.83;
+    A_2 = 110;
+    B_2 = 123.47;
+    C_3 = 130.81;
+    D_3 = 146.83;
+    E_3 = 164.81;
+    F_3 = 174.61;
+    Gs_3 = 207.65;
+    A_3 = 220;
+    B_3 = 246.94;
+    C_4 = 261.63;
+    D_4 = 293.66;
+    E_4 = 329.63;
+    F_4 = 349.23;
+    Gs_4 = 415.3;
+    A_4 = 440;
+    B_4 = 493.88;
+    C_5 = 523.25;
+    D_5 = 587.33;
+    E_5 = 659.25;
+    F_5 = 698.46;
+    Gs_5 = 830.61;
+    A_5 = 880;
+    B_5 = 987.77;
+    C_6 = 1046.5;
+    D_6 = 1174.66;
+    E_6 = 1318.51;
+    F_6 = 1396.91;
+    Gs_6 = 1661.22;
+    A_6 = 1760;
+    B_6 = 1975.33;
+    C_7 = 2093;
+    D_7 = 2349.32;
+    E_7 = 2637.02;
+    F_7 = 2793.83;
 }
 
 /*
@@ -317,6 +427,7 @@ function resetWhizzles()
         initX = whiz.getProperty(W_INIT_X);
         initY = whiz.getProperty(W_INIT_Y);
         whiz.setProperty(W_X, initX);
+        whiz.setProperty(W_FREQ, getNewFreq(initX));
         whiz.setProperty(W_Y, initY);
     }
     render();
@@ -510,6 +621,7 @@ function addWhizzle()
             updateSliderDisplay($(this), ".whizzle_startX_display");
             updateWhizzleAfterControlChange(whizzleId, $(this), W_X, true);
             updateWhizzleAfterControlChange(whizzleId, $(this), W_INIT_X, true);
+            updateWhizzleAfterControlChange(whizzleId, $(this), W_FREQ, true);
             //initX = $(this).slider("value");
         }
     });    
@@ -533,12 +645,10 @@ function addWhizzle()
             updateWhizzleAfterControlChange(whizzleId, $(this), W_VY, true);
         }
     });
-
-    var indexStr = whizzleId.substr(1);
-    var index = Number(indexStr).valueOf();
-    var whiz = whizzles[index];
-
+    
+    //var osc = addNote();
     $("#whizzler_canvas").mousedown(function (e) {
+        //osc.frequency.value = 300;
         var parentOffset = $(this).parent().offset();
         //or $(this).offset(); if you really just want the current element's offset
         var x = e.pageX - parentOffset.left;
@@ -588,6 +698,7 @@ function updateWhizzleWhenDragged(whizzleId, x, y) {
     if (whiz.getProperty(W_DRAGGING)) {
         whiz.setProperty(W_X, x);
         whiz.setProperty(W_INIT_X, x);
+        whiz.setProperty(W_FREQ, getNewFreq(x));
         whiz.setProperty(W_Y, y);
         whiz.setProperty(W_INIT_Y, y);
     }}
@@ -660,6 +771,8 @@ function updateWhizzleAfterControlChange(whizzleId, control, valueToChange, isSl
     var index = Number(indexStr).valueOf();
     var whiz = whizzles[index];
     
+    if(valueToChange === W_FREQ)
+        newValue = getNewFreq(newValue);
     // CHANGE THE AFFECTED WHIZZLE
     whiz.setProperty(valueToChange, newValue);
     
@@ -762,7 +875,8 @@ function makeWhizzle(whizzleDiv, initIdNum)
     newWhizzle.setProperty(W_WIDTH, wWidth);
     newWhizzle.setProperty(W_HEIGHT, wHeight);
     newWhizzle.setProperty(W_X, wX);
-    newWhizzle.setProperty(W_INIT_X, wX);    
+    newWhizzle.setProperty(W_INIT_X, wX);
+    newWhizzle.setProperty(W_FREQ, getNewFreq(wX));
     newWhizzle.setProperty(W_Y, wY);
     newWhizzle.setProperty(W_INIT_Y, wY);
     newWhizzle.setProperty(W_VX, wVx);
@@ -797,6 +911,12 @@ function updateWhizzles()
         var whiz = whizzles[i];
         whiz.setProperty(W_X, whiz.getProperty(W_X) + whiz.getProperty(W_VX));
         whiz.setProperty(W_Y, whiz.getProperty(W_Y) + whiz.getProperty(W_VY));
+        
+        var newFreq = getNewFreq(whiz.getProperty(W_X));
+        whiz.setProperty(W_FREQ, newFreq);
+        initOsc(newFreq);
+        //nodes[i].start();
+        //nodes[i].stop(audioContext.currentTime + .5);
         
         // CLAMPING, WHICH BOUNCES IT OFF WALLS
         if (whiz.getProperty(W_X) <= 0)
@@ -908,4 +1028,70 @@ function getSliderWhizzle(slider)
     var whizzleIdNum = whizzleId.text();
     var whiz = whizzles[whizzleIdNum];
     return whiz;
+}
+
+//Init Oscillators
+function initOsc(freq) {
+    //var nodes = new Array();
+    osc0 = audioContext.createOscillator();
+    /*osc1 = audioContext.createOscillator();
+    osc2 = audioContext.createOscillator();
+    osc3 = audioContext.createOscillator();
+    osc4 = audioContext.createOscillator();
+    osc5 = audioContext.createOscillator();
+    osc6 = audioContext.createOscillator();
+    osc7 = audioContext.createOscillator();
+    osc8 = audioContext.createOscillator();
+    osc9 = audioContext.createOscillator();*/
+    
+    //nodes = [osc0, osc1, osc2, osc3, osc4, osc5, osc5, osc6, osc7, osc8, osc9];
+    
+    var real = new Float32Array([0,0.4,0.4,1,1,1,0.3,0.7,0.6,0.5,0.9,0.8]);
+
+    var imag = new Float32Array(real.length);
+    var hornTable = audioContext.createPeriodicWave(real, imag);
+    
+    osc0.setPeriodicWave(hornTable);
+    /*osc1.setPeriodicWave(hornTable);
+    osc2.setPeriodicWave(hornTable);
+    osc3.setPeriodicWave(hornTable);
+    osc4.setPeriodicWave(hornTable);
+    osc5.setPeriodicWave(hornTable);
+    osc6.setPeriodicWave(hornTable);
+    osc7.setPeriodicWave(hornTable);
+    osc8.setPeriodicWave(hornTable);
+    osc9.setPeriodicWave(hornTable);*/
+    
+    osc0.frequency.value = freq;
+    /*osc1.frequency.value = getNewFreq(x);
+    osc2.frequency.value = getNewFreq(x);
+    osc3.frequency.value = getNewFreq(x);
+    osc4.frequency.value = getNewFreq(x);
+    osc5.frequency.value = getNewFreq(x);
+    osc6.frequency.value = getNewFreq(x);
+    osc7.frequency.value = getNewFreq(x);
+    osc8.frequency.value = getNewFreq(x);
+    osc9.frequency.value = getNewFreq(x);*/
+    
+    osc0.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    gainNode.gain.value = .3;
+    osc0.start();
+    osc0.stop(audioContext.currentTime + .5);
+    //return osc0;
+}
+
+function getNewFreq(x) {
+    var dx = canvasWidth / 48;
+    var freq = [A_0,B_0,C_1,D_1,E_1,F_1,Gs_1,
+        A_1,B_1,C_2,D_2,E_2,F_2,Gs_2,
+        A_2,B_2,C_3,D_3,E_3,F_3,Gs_3,
+        A_3,B_3,C_4,D_4,E_4,F_4,Gs_4,
+        A_4,B_4,C_5,D_5,E_5,F_5,Gs_5,
+        A_5,B_5,C_6,D_6,E_6,F_6,Gs_6,
+        A_6,B_6,C_7,D_7,E_7,F_7];
+    for (var i = 0; i < 48; i++) {
+        if (x < dx*(i+1))
+            return freq[i];
+    }
 }
