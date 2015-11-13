@@ -53,6 +53,7 @@ var W_VY;
 var W_WEIGHT;
 var W_INIT_X;
 var W_INIT_Y;
+var W_DRAGGING;
 
 // NOW FOR THE VARIABLES, THINGS THAT MAY CHANGE
 // DURING THE EXECUTION OF THIS APPLICATION
@@ -62,6 +63,7 @@ var canvasWidth;
 var canvasHeight;
 var canvas;
 var canvas2D;
+var dragging;
 
 // TIMER SETTINGS FOR RUNNING, SLOWING DOWN, SPEEDING UP,
 // AND PAUSING THE ANIMATION
@@ -159,6 +161,7 @@ function initConstants()
     W_WEIGHT = 10;
     W_INIT_X = 11;
     W_INIT_Y = 12;
+    W_DRAGGING = 13;
 
     // INCREMENT FOR SLIDERS
     XY_STEP = 1;
@@ -177,10 +180,9 @@ function initCanvas()
     canvasHeight = 500;
     canvas = document.getElementById("whizzler_canvas");
     canvas2D = canvas.getContext("2d");
+    dragging = false;
     $("#whizzler_canvas").click(function(){
-        resetWhizzles();
-        mouseX=parseInt(e.clientX-offsetX);
-        mouseY=parseInt(e.clientY-offsetY);
+        //resetWhizzles();
     });
 }
 
@@ -308,6 +310,7 @@ function updateSpeed()
  */
 function resetWhizzles()
 {
+    pauseWhizzles();
     canvas2D.clearRect(0, 0, canvas.width, canvas.height);
     for (var i = 0; i < whizzleCounter; i++) {
         var whiz = whizzles[i];
@@ -530,6 +533,43 @@ function addWhizzle()
             updateWhizzleAfterControlChange(whizzleId, $(this), W_VY, true);
         }
     });
+
+    var indexStr = whizzleId.substr(1);
+    var index = Number(indexStr).valueOf();
+    var whiz = whizzles[index];
+
+    $("#whizzler_canvas").mousedown(function (e) {
+        var parentOffset = $(this).parent().offset();
+        //or $(this).offset(); if you really just want the current element's offset
+        var x = e.pageX - parentOffset.left;
+        var y = e.pageY - parentOffset.top;
+        if (isClickInside(whizzleId, x, y)) {
+            dragging = true;
+            setDragging(whizzleId, true);
+        }
+    });
+
+    $("#whizzler_canvas").mousemove(function (e) {
+        if (dragging) {
+            var parentOffset = $(this).parent().offset();
+            //or $(this).offset(); if you really just want the current element's offset
+            var x = e.pageX - parentOffset.left;
+            var y = e.pageY - parentOffset.top;
+            updateWhizzleWhenDragged(whizzleId, x, y);
+            clearCanvas();
+            render();
+        }
+        //render();
+    });
+
+    $("#whizzler_canvas").mouseup(function (e) {
+        if (dragging) {
+            render();
+        }
+        setDragging(whizzleId, false);
+        dragging = false;
+    });
+
     
     // FINALLY, MAKE THE WHIZZLE WITH ALL THE CURRENT UI SETTINGS
     // AND PUT IT IN THE ARRAY
@@ -539,6 +579,24 @@ function addWhizzle()
     
     // UPDATE THE CANVAS DISPLAY
     render();
+}
+
+function updateWhizzleWhenDragged(whizzleId, x, y) {
+    var indexStr = whizzleId.substr(1);
+    var index = Number(indexStr).valueOf();
+    var whiz = whizzles[index];
+    if (whiz.getProperty(W_DRAGGING)) {
+        whiz.setProperty(W_X, x);
+        whiz.setProperty(W_INIT_X, x);
+        whiz.setProperty(W_Y, y);
+        whiz.setProperty(W_INIT_Y, y);
+    }}
+
+function setDragging(whizzleId, dragging) {
+    var indexStr = whizzleId.substr(1);
+    var index = Number(indexStr).valueOf();
+    var whiz = whizzles[index];
+    whiz.setProperty(W_DRAGGING, dragging);
 }
 
 function isClickInside(whizzleId, x, y) {
@@ -709,6 +767,7 @@ function makeWhizzle(whizzleDiv, initIdNum)
     newWhizzle.setProperty(W_INIT_Y, wY);
     newWhizzle.setProperty(W_VX, wVx);
     newWhizzle.setProperty(W_VY, wVy);
+    newWhizzle.setProperty(W_DRAGGING, false);
     
     // NOW RETURN THE WHIZZLE
     return newWhizzle;
